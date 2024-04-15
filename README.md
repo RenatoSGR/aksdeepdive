@@ -5,25 +5,31 @@ Repo for the demo on Global Azure Portugal 2024
 
 1. [Demo Objectives](#1-learning-objectives)
 2. [Pre-Requisites](#2-pre-requisites)
-3. [Setup Development Environment](#3-development-environment)
-    - 3.1 [Pre-built Container, GitHub Codespaces](#31-pre-built-environment-in-cloud-github-codespaces)
-    - 3.2 [Pre-built Container, Docker Desktop](#32-pre-built-environment-on-device-docker-desktop)
-    - 3.3 [Manual Python env, Anaconda or venv](#33-manual-setup-environment-on-device-anaconda-or-venv)
-4. [Provision Azure Resources](#4-create-azure-resources)
-    - 4.1 [Authenticate With Azure](#41-authenticate-with-azure)
-    - 4.2 [Run Provisioning Script](#42-run-provisioning-script)
-    - 4.3 [Verify config.json setup](#43-verify-configjson-setup)
-    - 4.4 [Verify .env setup](#44-verify-env-setup)
-    - 4.5 [Verify local Connections](#45-verify-local-connections-for-prompt-flow)
-    - 4.6 [Verify cloud Connections](#46-verify-cloud-connections-for-prompt-flow)
-5. [Populate With Your Data](#5-populate-with-sample-data)
-6. [Build Your Prompt Flow](#6-building-a-prompt-flow)
-    - 6.1 [Explore contoso-chat Prompt Flow](#61-explore-the-contoso-chat-prompt-flow)
-    - 6.2 [Understand Prompt Flow Components](#62-understand-prompt-flow-components)
-    - 6.3 [Run The Prompt Flow](#63-run-the-prompt-flow)
-7. [Evaluate Your Prompt Flow](#7-evaluating-prompt-flow-results)
-8. [Deploy Using Azure AI SDK](#8-deployment-with-sdk)
-9. [Deploy with GitHub Actions](#9-deploy-with-github-actions)
+    - 2.1 [Create Azure Resources](#21-create-azure-resources)
+3. [Manual Setup Environment ](#3-manual-setup-environment)
+    - 3.1 [Create the AKS Cluster with Cilium Network Data Plane & CNI Overlay Network Plugin](#31-create-the-aks-cluster-with-cilium-network-data-plane--cni-overlay-network-plugin)
+    - 3.2 [Login into the cluster](#32-login-into-the-cluster)
+    - 3.3 [Enable cost analysis addon on the AKS cluster](#33-enable-cost-analysis-addon-on-the-aks-cluster)
+    - 3.4 [Update the AKS cluster from Azure CNI plugin to Azure CNI Overlay](#34-update-the-aks-cluster-from-azure-cni-plugin-to-azure-cni-overlay)
+4. [Installing unmanaged community nginx ingress controller](#4-installing-unmanaged-community-nginx-ingress-controller)
+5. [Deploy the Application - AKS Store Demo](#5-deploy-the-application---aks-store-demo)
+6. [Enable Istio addon](#6-enable-istio-addon)
+    - 6.1 [Expose the store-front service via Istio ingress gateway - public gateway](#61-expose-the-store-front-service-via-istio-ingress-gateway---public-gateway)
+7. [Expose the store-admin service via app-routing addon](#7-expose-the-store-admin-service-via-app-routing-addon)
+    - 7.1 [Set up a custom domain name and SSL certificate with the app routing add-on](#71-set-up-a-custom-domain-name-and-ssl-certificate-with-the-app-routing-add-on-we-can-step-to-82-section)
+    - 7.2 [Create the Ingress that uses a host name and a certificate from Azure Key Vault](#72-create-the-ingress-that-uses-a-host-name-and-a-certificate-from-azure-key-vault)
+    - 7.3 [Add to hosts file the subdomain](#73-add-to-hosts-file-the-subdomain)
+8. [Enable Monitoring into the cluster via managed Prometheus & Grafana](#8-enable-monitoring-into-the-cluster-via-managed-prometheus--grafana)
+    - 8.1 [Enable Network Observability](#81-enable-network-observability)
+9. [Deploy the AI service connected to azure openai with keyvault to store the secrets (Open AI api key) - using the Microsoft Entra Workload ID - workload identity method](#9-deploy-the-ai-service-connected-to-azure-openai-with-keyvault-to-store-the-secrets-open-ai-api-key---using-the-microsoft-entra-workload-id---workload-identity-method)
+10. [AKS Scaling](#10-aks-scaling)
+    - 10.1 [Node autoprovisioning (preview) with karpenter dynamic cluster scaling](#101-node-autoprovisioning-preview-with-karpenter-dynamic-cluster-scaling)
+11. [AKS Fleet Manager - manage at scale](#11-aks-fleet-manager---manage-at-scale)
+    - 11.1 [Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)](#111-create-a-fleet-with-a-hub-cluster-enables-workload-propagation-and-multi-cluster-load-balancing)
+    - 11.2 [Upgrade all members](#112-upgrade-all-members)
+    - 11.3 [Update clusters in a specific order](#113-update-clusters-in-a-specific-order)
+
+
 
 ## 1. Learning Objectives
 Deep Dive in AKS, to learn to deploy and configure a production ready AKS Cluster and prepare workloads to run on it with all the configurations needed for a proper lifecycle on AKS CLusters. 
@@ -187,7 +193,7 @@ kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.
 curl http://<ingress-ip>
 ```
 
-## 7. Enable Istio addon 
+## 6. Enable Istio addon 
 
 ```bash
 # enable the addon on the cluster (already enabled via pre-requisites section)
@@ -204,7 +210,7 @@ kubectl label namespace aksappga istio.io/rev=asm-1-20
 kubectl rollout restart deployment <deployment name> -n <deployment namespace>
 ```
 
-### 7.1. Expose the store-front service via Istio ingress gateway - public gateway
+### 6.1. Expose the store-front service via Istio ingress gateway - public gateway
 
 ```bash
 # apply the gateway configuration
@@ -217,7 +223,7 @@ kubectl get svc aks-istio-ingressgateway-external -n aks-istio-ingress -o jsonpa
 curl http://<gateway-ip>
 ```
 
-## 8. Expose the store-admin service via app-routing addon 
+## 7. Expose the store-admin service via app-routing addon 
 
 ***Note:*** It supports already internal ingress (LB) mode - https://learn.microsoft.com/en-us/azure/aks/app-routing-nginx-configuration#create-an-internal-nginx-ingress-controller-with-a-private-ip-address)
 
@@ -237,7 +243,7 @@ kubectl get svc nginx -n app-routing-system -o jsonpath='{.status.loadBalancer.i
 curl http://<app-routing-ip>
 ```
 
-### 8.1 Set up a custom domain name and SSL certificate with the app routing add-on (we can step to 8.2 section)
+### 7.1 Set up a custom domain name and SSL certificate with the app routing add-on (we can step to 8.2 section)
 
 On this section we will use the Azure Key Vault integration with the app-routing addon to store the SSL certificate and use it to expose the store-front service via the app-routing addon with a custom domain name.
 
@@ -263,7 +269,7 @@ az network dns zone show -g GlobalAzureDemo -n globalazuredemomsft.com --query "
 az aks approuting zone add -g GlobalAzureDemo -n globalazure-demo --ids=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/globalazuredemo/providers/Microsoft.Network/dnszones/globalazuredemomsft.com --attach-zones
 ```	
 
-### 8.2. Create the Ingress that uses a host name and a certificate from Azure Key Vault
+### 7.2. Create the Ingress that uses a host name and a certificate from Azure Key Vault
 
 ```bash
 # retry the certificate uri from the key vault needed for the ingress definition
@@ -275,12 +281,12 @@ kubectl apply -f .\app-routing-ingress-tls.yaml
 
 We can then check the secret being created on AKS, and the dns zone updated with an A record for the subdomain previously created (store-front.globalazuredemomsft.com).
 
-### 8.3 Add to hosts file the subdomain
+### 7.3 Add to hosts file the subdomain
 
 Add to the the local hosts file, the subdomain name store-front.globalazuredemomsft.com pointing to the app-routing ip and then we can hit [on browser](https://store-front.globalazuredemomsft.com/) and check the store-admin service with th self signed certificate and exposed via tls using the app-routing addon.
 
 
-## 9. Enable Monitoring into the cluster via managed Prometheus & Grafana 
+## 8. Enable Monitoring into the cluster via managed Prometheus & Grafana 
 
 In this section we will enable the monitoring addon on the AKS cluster, enabling the managed prometheus and check the metrics on the managed grafana dashboard.
 
@@ -306,7 +312,7 @@ or for powershell
 kubectl get po -owide -n kube-system | Select-String "ama-"
 ```	
 
-### 9.1. Enable Network Observability 
+### 8.1. Enable Network Observability 
 
 [Network observability] (https://learn.microsoft.com/en-us/azure/aks/network-observability-managed-cli?tabs=non-cilium) is an important part of maintaining a healthy and performant Kubernetes cluster. By collecting and analyzing data about network traffic, you can gain insights into how your cluster is operating and identify potential problems before they cause outages or performance degradation.
 
@@ -322,7 +328,7 @@ Learn more about Retina (https://azure.microsoft.com/en-us/blog/microsoft-open-s
 Learn more about [control plane metrics](https://learn.microsoft.com/en-us/azure/aks/monitor-control-plane-metrics) with API server and etcd metrics Grafana dashboards integration.
 
 
-## 10. Deploy the AI service connected to azure openai with keyvault to store the secrets (Open AI api key) - using the Microsoft Entra Workload ID - workload identity method
+## 9. Deploy the AI service connected to azure openai with keyvault to store the secrets (Open AI api key) - using the Microsoft Entra Workload ID - workload identity method
 
 Learn more about [workload identity](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-identity-access#access-with-a-microsoft-entra-workload-id)
 
@@ -416,7 +422,7 @@ We can now test the store-admin integration with openai, by creating a product t
 
 ## AKS Scaling
 
-## 11. Node autoprovisioning (preview) with karpenter dynamic cluster scaling
+## 10. Node autoprovisioning (preview) with karpenter dynamic cluster scaling
 
 In this section we will enable the [node autoprovisioning feature](https://learn.microsoft.com/en-us/azure/aks/node-autoprovision?tabs=azure-cli) on the AKS cluster, using the karpenter dynamic cluster scaling feature
 
@@ -442,7 +448,7 @@ kubectl get events -A --field-selector source=karpenter -w
 kubectl apply -f stress-deployment.yaml 
 ```
 
-## AKS Fleet Manager - manage at scale
+## 11.1 AKS Fleet Manager - manage at scale
 
 In this section we will create an AKS Fleet Manager resource and onoboard new AKS clusters to the fleeet hub, in order to perform operations at scale like and upgrade or resource proliferation between multiple clusters.
 
@@ -461,7 +467,7 @@ In this section we will create an AKS Fleet Manager resource and onoboard new AK
 
 
 
-## 12. Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)
+## 11.2 Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)
 
 ```bash
 # create the fleet resource with a hub cluster (already created)
@@ -479,7 +485,7 @@ az fleet member list --resource-group fleet-aks --fleet-name fleetmgr-globalazur
 ```
 
 
-### 12.1. Upgrade all members 
+### 11.3. Upgrade all members 
 
 Platform admins managing large number of clusters often have problems with staging the updates of multiple clusters (for example, upgrading node OS image versions, upgrading Kubernetes versions) in a safe and predictable way. To address this pain point, Azure Kubernetes Fleet Manager (Fleet) allows you to orchestrate updates across multiple clusters using update runs, stages, groups, and strategies.
 
