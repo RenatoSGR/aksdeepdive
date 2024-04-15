@@ -25,7 +25,7 @@ Repo for the demo on Global Azure Portugal 2024
 10. [Node autoprovisioning (preview) with karpenter dynamic cluster scaling](#10-node-autoprovisioning-preview-with-karpenter-dynamic-cluster-scaling)
 11. [AKS Fleet Manager - manage at scale](#11-aks-fleet-manager---manage-at-scale)
     - 11.1 [Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)](#111-create-a-fleet-with-a-hub-cluster-enables-workload-propagation-and-multi-cluster-load-balancing)
-    - 11.2 [Upgrade all members](#112-upgrade-all-members)
+    - 11.2 [Upgrade the members](#112-upgrade-the-members)
 
 
 ## 1. Learning Objectives
@@ -51,6 +51,14 @@ We setup our development environment in the previous step. In this step, we'll *
 
 ```powershell
 Set-Alias -Name k -Value kubectl
+```
+
+or 
+
+```bash
+alias k=kubectl
+
+source ~/.bashrc
 ```
 
 ```bash
@@ -470,19 +478,21 @@ In this section we will create an AKS Fleet Manager resource and onoboard new AK
 # create the fleet resource with a hub cluster (already created)
 az fleet create --resource-group fleet-aks --name fleetmgr-globalazure-demo --location westeurope --enable-hub
 
-# create variables for the member clusters
-export MEMBER_NAME_1=globalazure-demo
-export MEMBER_CLUSTER_ID_1=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/fleet-aks/providers/Microsoft.ContainerService/managedClusters/globalazure-demo
+# create variables for the fleet & member clusters 
+export GROUP=fleet-aks
+export FLEET=fleetmgr-globalazure-demo
+export MEMBER_NAME_3=globalazure-demo
+export MEMBER_CLUSTER_ID_3=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourcegroups/GlobalAzureDemo/providers/Microsoft.ContainerService/managedClusters/globalazure-demo
 
 ## Join the first member cluster
-az fleet member create --resource-group fleet-aks --fleet-name fleetmgr-globalazure-demo --name globalazure-demo --update-group dev --member-cluster-id /subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/fleet-aks/providers/Microsoft.ContainerService/managedClusters/globalazure-demo
+az fleet member create --resource-group $GROUP --fleet-name $FLEET --name $MEMBER_NAME_3 --update-group test --member-cluster-id $MEMBER_CLUSTER_ID_3
 
 ## list members
-az fleet member list --resource-group fleet-aks --fleet-name fleetmgr-globalazure-demo -o table
+az fleet member list --resource-group $GROUP --fleet-name $FLEET -o table
 ```
 
 
-### 11.2. Upgrade all members 
+### 11.2. Upgrade the members 
 
 Platform admins managing large number of clusters often have problems with staging the updates of multiple clusters (for example, upgrading node OS image versions, upgrading Kubernetes versions) in a safe and predictable way. To address this pain point, Azure Kubernetes Fleet Manager (Fleet) allows you to orchestrate updates across multiple clusters using update runs, stages, groups, and strategies.
 
@@ -490,18 +500,58 @@ Platform admins managing large number of clusters often have problems with stagi
 
 We can use both Azure portal or azure cli
 
+**Update clusters in a specific order**
+
+
 ```bash
-az fleet updaterun create --resource-group fleet-aks --fleet-name fleetmgr-globalazure-demo --name run-1 --upgrade-type Full --kubernetes-version 1.26.0
+# upgrade all memebers at once
+az fleet updaterun create --resource-group $GROUP --fleet-name $FLEET --name run-1 --upgrade-type Full --kubernetes-version 1.29.0
+```
+
+```bash
+#https://learn.microsoft.com/en-us/azure/kubernetes-fleet/update-orchestration?tabs=cli#update-clusters-in-a-specific-order
+az fleet updaterun create --resource-group $GROUP --fleet-name $FLEET --name run-3 --upgrade-type Full --kubernetes-version 1.26.0 --stages example-stages.json
+
+Here's an example of input from the stages file (example-stages.json):
+
+{
+    "stages": [
+        {
+            "name": "stage1",
+            "groups": [
+                {
+                    "name": "group-1a"
+                },
+                {
+                    "name": "group-1b"
+                },
+                {
+                    "name": "group-1c"
+                }
+            ],
+            "afterStageWaitInSeconds": 3600
+        },
+        {
+            "name": "stage2",
+            "groups": [
+                {
+                    "name": "group-2a"
+                },
+                {
+                    "name": "group-2b"
+                },
+                {
+                    "name": "group-2c"
+                }
+            ]
+        }
+    ]
+}
 ```
 
 ***extra arguments***
 
 - --upgrade-type NodeImageOnly
 
-**Update clusters in a specific order**
 
-```bash
-#https://learn.microsoft.com/en-us/azure/kubernetes-fleet/update-orchestration?tabs=cli#update-clusters-in-a-specific-order
-az fleet member update --resource-group $GROUP --fleet-name $FLEET --name member1 --update-group dev
-```
 
