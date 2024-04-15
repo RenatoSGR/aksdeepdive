@@ -22,13 +22,10 @@ Repo for the demo on Global Azure Portugal 2024
 8. [Enable Monitoring into the cluster via managed Prometheus & Grafana](#8-enable-monitoring-into-the-cluster-via-managed-prometheus--grafana)
     - 8.1 [Enable Network Observability](#81-enable-network-observability)
 9. [Deploy the AI service connected to azure openai with keyvault to store the secrets (Open AI api key) - using the Microsoft Entra Workload ID - workload identity method](#9-deploy-the-ai-service-connected-to-azure-openai-with-keyvault-to-store-the-secrets-open-ai-api-key---using-the-microsoft-entra-workload-id---workload-identity-method)
-10. [AKS Scaling](#10-aks-scaling)
-    - 10.1 [Node autoprovisioning (preview) with karpenter dynamic cluster scaling](#101-node-autoprovisioning-preview-with-karpenter-dynamic-cluster-scaling)
+10. [Node autoprovisioning (preview) with karpenter dynamic cluster scaling](#10-node-autoprovisioning-preview-with-karpenter-dynamic-cluster-scaling)
 11. [AKS Fleet Manager - manage at scale](#11-aks-fleet-manager---manage-at-scale)
     - 11.1 [Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)](#111-create-a-fleet-with-a-hub-cluster-enables-workload-propagation-and-multi-cluster-load-balancing)
     - 11.2 [Upgrade all members](#112-upgrade-all-members)
-    - 11.3 [Update clusters in a specific order](#113-update-clusters-in-a-specific-order)
-
 
 
 ## 1. Learning Objectives
@@ -448,7 +445,7 @@ kubectl get events -A --field-selector source=karpenter -w
 kubectl apply -f stress-deployment.yaml 
 ```
 
-## 11.1 AKS Fleet Manager - manage at scale
+## 11. AKS Fleet Manager - manage at scale
 
 In this section we will create an AKS Fleet Manager resource and onoboard new AKS clusters to the fleeet hub, in order to perform operations at scale like and upgrade or resource proliferation between multiple clusters.
 
@@ -467,7 +464,7 @@ In this section we will create an AKS Fleet Manager resource and onoboard new AK
 
 
 
-## 11.2 Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)
+## 11.1 Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)
 
 ```bash
 # create the fleet resource with a hub cluster (already created)
@@ -485,7 +482,7 @@ az fleet member list --resource-group fleet-aks --fleet-name fleetmgr-globalazur
 ```
 
 
-### 11.3. Upgrade all members 
+### 11.2. Upgrade all members 
 
 Platform admins managing large number of clusters often have problems with staging the updates of multiple clusters (for example, upgrading node OS image versions, upgrading Kubernetes versions) in a safe and predictable way. To address this pain point, Azure Kubernetes Fleet Manager (Fleet) allows you to orchestrate updates across multiple clusters using update runs, stages, groups, and strategies.
 
