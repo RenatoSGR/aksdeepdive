@@ -507,6 +507,7 @@ We can use both Azure portal or azure cli
 # upgrade all memebers at once
 az fleet updaterun create --resource-group $GROUP --fleet-name $FLEET --name run-1 --upgrade-type Full --kubernetes-version 1.29.0
 ```
+![alt text](content/fleet-update.png)
 
 ```bash
 #https://learn.microsoft.com/en-us/azure/kubernetes-fleet/update-orchestration?tabs=cli#update-clusters-in-a-specific-order
