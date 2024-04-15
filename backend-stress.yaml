@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: stress
+        image: wdhif/stress-ng
+        args:
+          ["--agressive", "--cpu", "2", "--vm", "2", "--vm-bytes", "2000"]
+        resources:
+          requests:
+            cpu: "2"
+            memory: "2000Mi"
+          limits:
+            cpu: "2"
+            memory: "2000Mi"  
