@@ -220,6 +220,9 @@ kubectl rollout restart deployment <deployment name> -n <deployment namespace>
 ### 6.1. Expose the store-front service via Istio ingress gateway - public gateway
 
 ```bash
+# enable external ingress gateway for the mesh
+az aks mesh enable-ingress-gateway --resource-group $RESOURCE_GROUP --name $CLUSTER --ingress-gateway-type external
+
 # apply the gateway configuration
 kubectl apply -f .\gateway.yaml
 
@@ -229,8 +232,6 @@ kubectl get svc aks-istio-ingressgateway-external -n aks-istio-ingress -o jsonpa
 # curl the store-front service via the Istio gateway
 curl http://<gateway-ip>
 
-# enable external ingress gateway for the mesh
-az aks mesh enable-ingress-gateway --resource-group $RESOURCE_GROUP --name $CLUSTER --ingress-gateway-type external
 ```
 
 ## 7. Expose the store-admin service via app-routing addon 
