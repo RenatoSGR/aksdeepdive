@@ -329,7 +329,7 @@ We can then check the secret being created on AKS.
 In a few minutes, the Azure DNS zone will be reconfigured with a new A record pointing to the IP address of the NGINX ingress controller.
 
 ```bash
-az network dns record-set a list -g $RGNAME -z $DNSZONENAME
+az network dns record-set a list -g $RESOURCE_GROUP -z $DNS_ZONE
 ```
 
 The following example output shows the created record:
