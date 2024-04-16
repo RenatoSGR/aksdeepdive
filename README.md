@@ -85,17 +85,17 @@ az network dns zone create -g $RESOURCE_GROUP -n $DNS_ZONE
 
 ```bash
 # enable the oidc issuer and workload identity on the cluster
-az aks update -g $RESOURCE_GROUP -n $CLUSTER --enable-oidc-issuer --enable-workload-identity
+az aks update -g $RESOURCE_GROUP -n $CLUSTER --enable-oidc-issuer --enable-workload-identity --no-wait
 ```
 
 ```bash	
 # enable the mesh addon on the cluster
-az aks mesh enable --resource-group $RESOURCE_GROUP --name $CLUSTER
+az aks mesh enable --resource-group $RESOURCE_GROUP --name $CLUSTER --no-wait
 ```
 
 ```bash
 # enable the app-routing addon on the cluster
-az aks approuting enable -g $RESOURCE_GROUP -n $CLUSTER
+az aks approuting enable -g $RESOURCE_GROUP -n $CLUSTER --no-wait
 ```
 
 
