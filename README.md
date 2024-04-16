@@ -49,13 +49,6 @@ We setup our development environment in the previous step. In this step, we'll *
 
 ## 3. Manual Setup Environment
 
-```powershell
-# set alias for kubectl
-Set-Alias -Name k -Value kubectl
-```
-
-or 
-
 ```bash
 alias k=kubectl
 
@@ -88,8 +81,6 @@ az provider register --namespace Microsoft.ContainerService
 # create a public dns zone for the app routing addon that we will use later on
 az network dns zone create -g $RESOURCE_GROUP -n $DNS_ZONE
 
-# add an A record to the dns zone for the app routing addon demo app
-az network dns record-set a add-record -g $RESOURCE_GROUP -z $DNS_ZONE -n store-front -a 
 ```
 
 ```bash
