@@ -158,6 +158,10 @@ az aks update --name $CLUSTER --resource-group $RESOURCE_GROUP --network-plugin-
 ```
 
 ## 4. Installing unmanaged community nginx ingress controller
+
+#### What is an ingress?
+In Kubernetes, an ingress is an API object that manages external access to services within a cluster. It acts as a traffic controller, routing incoming requests to the appropriate services based on rules defined in the ingress resource. It provides a way to expose HTTP and HTTPS routes to services, enabling external access to applications running in the cluster.
+
 ```bash
 # install nginx ingress controller chart (https://github.com/kubernetes/ingress-nginx) 
 helm install ingress-nginx ingress-nginx/ingress-nginx `
@@ -234,6 +238,14 @@ az aks mesh enable-ingress-gateway --resource-group $RESOURCE_GROUP --name $CLUS
 
 ## 7. Expose the store-admin service via app-routing addon 
 
+The application routing add-on with NGINX delivers the following:
+
+- Easy configuration of managed NGINX Ingress controllers based on Kubernetes NGINX Ingress controller.
+- Integration with Azure DNS for public and private zone management
+- SSL termination with certificates stored in Azure Key Vault.
+- The add-on runs the [application routing operator](https://github.com/Azure/aks-app-routing-operator)
+
+
 ***Note:*** It supports already internal ingress (LB) mode - https://learn.microsoft.com/en-us/azure/aks/app-routing-nginx-configuration#create-an-internal-nginx-ingress-controller-with-a-private-ip-address)
 
 ```bash
@@ -258,7 +270,13 @@ curl http://<app-routing-ip>
 
 On this section we will use the Azure Key Vault integration with the app-routing addon to store the SSL certificate and use it to expose the store-front service via the app-routing addon with a custom domain name.
 
-We will use a self signed certificate for demo purposes.
+#### Terminate HTTPS traffic with certificates from Azure Key Vault
+
+The application routing add-on can be integrated with Azure Key Vault to retrieve SSL certificates to use with ingresses.
+
+#### Create and export a self-signed SSL certificate
+
+For testing, you can use a self-signed public certificate instead of a Certificate Authority (CA)-signed certificate. Create a self-signed SSL certificate to use with the Ingress using the openssl req command. Make sure you replace with the DNS name you're using.
 
 ```bash
 # create a self signed certificate (already created via pre-requisites section)
@@ -268,7 +286,11 @@ openssl pkcs12 -export -in aks-ingress-tls.crt -inkey aks-ingress-tls.key -out a
 
 # import the certificate into azure key vault
 az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f aks-ingress-tls.pfx 
+```
 
+
+#### Enable Azure Key Vault integration
+```bash	
 # enable azure key vault integration (this will enable secretcsi provider if not already enabled)
 az keyvault show --name $VAULT_NAME --query "id" --output tsv
 
@@ -280,17 +302,61 @@ az network dns zone show -g $RESOURCE_GROUP -n $DNS_ZONE --query "id" --output t
 az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
 ```	
 
-### 7.2. Create the Ingress that uses a host name and a certificate from Azure Key Vault
+### 7.2. Create the Ingress that uses a custom domain name hosted as an Azure DNS zone 
+
+#### Retrieve the certificate URI from Azure Key Vault
+Get the certificate URI to use in the Ingress from Azure Key Vault using the az keyvault certificate show command.
 
 ```bash
-# retry the certificate uri from the key vault needed for the ingress definition
+# retrieve the certificate uri from the key vault needed for the ingress definition
 az keyvault certificate show --vault-name  $VAULT_NAME -n aks-ingress-tls --query "id" --output tsv
+```
 
+
+#### Update the ingress object to use a hostname
+
+Update the file ingress.yaml with the following contents. Replace <ZoneName> with a name of the zone you created earlier and <KeyVaultCertificateUri> with the certificate URI. You can ommit the version of the certificate and just use that portion https://KeyVaultName.vault.azure.net/certificates/KeyVaultCertificateName.
+
+#### Apply the modified ingress
+
+```bash
 #copy the uri to the app-routing-ingress-tls.yaml file and apply it
 kubectl apply -f .\app-routing-ingress-tls.yaml  
 ```
 
-We can then check the secret being created on AKS, and the dns zone updated with an A record for the subdomain previously created (store-front.globalazuredemomsft.com).
+We can then check the secret being created on AKS.
+
+##### Verify that the Azure DNS has been reconfigured with a new A record
+
+In a few minutes, the Azure DNS zone will be reconfigured with a new A record pointing to the IP address of the NGINX ingress controller.
+
+```bash
+az network dns record-set a list -g $RGNAME -z $DNSZONENAME
+```
+
+The following example output shows the created record:
+
+```bash
+[
+  {
+    "aRecords": [
+      {
+        "ipv4Address": "20.51.92.19"
+      }
+    ],
+    "etag": "188f0ce5-90e3-49e6-a479-9e4053f21965",
+    "fqdn": "helloworld.contoso.com.",
+    "id": "/subscriptions/xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx/resourceGroups/foo/providers/Microsoft.Network/dDnsZones/contoso.com/A/helloworld",
+    "isAutoRegistered": false,
+    "name": "helloworld",
+    "resourceGroup": "foo",
+    "ttl": 300,
+    "type": "Microsoft.Network/dnsZones/A"
+  }
+]
+```
+
+If this Azure DNS zone is configured to resolve to an actual public domain that you purchased and you've configured its top level nameservers, you should be able to use your browser to access the hostname.
 
 ### 7.3 Add to hosts file the subdomain
 
