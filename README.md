@@ -501,13 +501,14 @@ In this section we will create an AKS Fleet Manager resource and onoboard new AK
 ## 11.1 Create a fleet with a hub cluster (enables workload propagation and multi-cluster load balancing)
 
 
-
+```bash
 # create variables for the fleet & member clusters 
 export FLEET_GROUP=fleet-aks
 export LOCATION=westeurope
 export FLEET=fleetmgr-globalazure-demo
 export MEMBER_NAME_3=globalazure-demo
 export MEMBER_CLUSTER_ID_3=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourcegroups/GlobalAzureDemo/providers/Microsoft.ContainerService/managedClusters/globalazure-demo
+```
 
 ```bash
 # create the fleet resource with a hub cluster (already created)
