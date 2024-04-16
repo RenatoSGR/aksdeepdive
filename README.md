@@ -95,7 +95,7 @@ az aks mesh enable --resource-group $RESOURCE_GROUP --name $CLUSTER --no-wait
 
 ```bash
 # enable the app-routing addon on the cluster
-az aks approuting enable -g $RESOURCE_GROUP -n $CLUSTER --no-wait
+az aks approuting enable -g $RESOURCE_GROUP -n $CLUSTER 
 ```
 
 
