@@ -161,11 +161,11 @@ In Kubernetes, an ingress is an API object that manages external access to servi
 
 ```bash
 # install nginx ingress controller chart (https://github.com/kubernetes/ingress-nginx) 
-helm install ingress-nginx ingress-nginx/ingress-nginx `
---create-namespace `
---namespace ingress-nginx `
---set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz `
---set controller.nodeSelector."kubernetes\.io/os"=linux `
+helm install ingress-nginx ingress-nginx/ingress-nginx \
+--create-namespace \
+--namespace ingress-nginx \
+--set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+--set controller.nodeSelector."kubernetes\.io/os"=linux \
 --set controller.replicaCount=2 
 #--set controller.service.loadBalancerIP="" 
 #--set controller.nodeSelector.agentpool=
