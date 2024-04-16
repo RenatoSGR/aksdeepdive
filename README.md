@@ -57,6 +57,7 @@ source ~/.bashrc
 
 ```bash
 # create the demo variables
+export SUBSCRIPTION_ID=""
 export RESOURCE_GROUP=GlobalAzureDemo
 export CLUSTER=globalazure-demo
 export LOCATION=westeurope
@@ -111,12 +112,12 @@ az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f ak
 # enable azure key vault integration (this will enable secretcsi provider if not already enabled)
 az keyvault show --name $VAULT_NAME --query "id" --output tsv
 
-az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
+az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
 
 ### attach dns zone to app routing
 az network dns zone show -g $RESOURCE_GROUP -n $DNS_ZONE --query "id" --output tsv
 
-az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
+az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
 
 ### Create the Ingress that uses a host name and a certificate from Azure Key Vault
 az keyvault certificate show --vault-name $VAULT_NAME -n aks-ingress-tls --query "id" --output tsv
@@ -135,8 +136,7 @@ az aks create --name aks-nap --resource-group fleet-aks --node-provisioning-mode
 ### 3.2. Login into the cluster
 ```bash
 #login into the AKS Cluster
-subscriptionId=""
-az account set --subscription $subscriptionId
+az account set --subscription $SUBSCRIPTION_ID
 az aks get-credentials --resource-group $RESOURCE_GROUP --name $CLUSTER --overwrite-existing
 ```
 
@@ -294,12 +294,12 @@ az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f ak
 # enable azure key vault integration (this will enable secretcsi provider if not already enabled)
 az keyvault show --name $VAULT_NAME --query "id" --output tsv
 
-az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
+az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
 
 ### attach dns zone to app routing
 az network dns zone show -g $RESOURCE_GROUP -n $DNS_ZONE --query "id" --output tsv
 
-az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
+az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
 ```	
 
 ### 7.2. Create the Ingress that uses a custom domain name hosted as an Azure DNS zone 
