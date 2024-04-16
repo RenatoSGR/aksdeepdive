@@ -109,21 +109,20 @@ openssl pkcs12 -export -in aks-ingress-tls.crt -inkey aks-ingress-tls.key -out a
 # import the certificate into azure key vault
 az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f aks-ingress-tls.pfx 
 
+# retrieve the certificate from Azure Key Vault
+az keyvault certificate show --vault-name $VAULT_NAME -n aks-ingress-tls --query "id" --output tsv
+
 # enable azure key vault integration (this will enable secretcsi provider if not already enabled)
 az keyvault show --name $VAULT_NAME --query "id" --output tsv
 
 az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
 
-### attach dns zone to app routing
+# attach dns zone to app routing
 az network dns zone show -g $RESOURCE_GROUP -n $DNS_ZONE --query "id" --output tsv
 
 az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
 
-### Create the Ingress that uses a host name and a certificate from Azure Key Vault
-az keyvault certificate show --vault-name $VAULT_NAME -n aks-ingress-tls --query "id" --output tsv
 ```
-
-
 
 ### 3.1. Create the AKS Cluster with Cilium Network Data Plane & CNI Overlay Network Plugin
 
@@ -151,9 +150,7 @@ az aks update --resource-group $RESOURCE_GROUP --name $CLUSTER --enable-cost-ana
 Before doing this task, please read the [documentation](https://learn.microsoft.com/en-us/azure/aks/azure-cni-overlay?tabs=kubectl#upgrade-an-existing-cluster-to-cni-overlay) regarding the limitations and criteria for this operation.
 
 ```bash
-CLUSTER="globalazure-demo"
-RESOURCE_GROUP="GlobalAzureDemo"
-LOCATION="westeurope"
+# update the cluster to use the overlay network plugin
 az aks update --name $CLUSTER --resource-group $RESOURCE_GROUP --network-plugin-mode overlay --pod-cidr 192.168.0.0/16
 ```
 
