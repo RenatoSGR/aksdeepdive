@@ -357,12 +357,35 @@ kubectl get po -owide -n kube-system | grep ama-
 # enable network observability on the cluster
 az aks update --resource-group $RESOURCE_GROUP --name $CLUSTER --enable-network-observability
 ```
+</br>
 
 
+#### Retina
+Retina is a cloud-agnostic, open-source Kubernetes Network Observability platform which helps with DevOps, SecOps and compliance use cases. It provides a centralized hub for monitoring application and network health and security, catering to Cluster Network Administrators, Cluster Security Administrators and DevOps Engineers.
+Retina collects customizable telemetry, which can be exported to multiple storage options (such as Prometheus, Azure Monitor, and other vendors) and visualized in a variety of ways (like Grafana, Azure Log Analytics, and other vendors).
+
+##### Features
+- eBPF-based Network Observability platform for Kubernetes workloads.
+- On-Demand and Configurable.
+- Actionable, industry-standard Prometheus metrics.
+- Streamlined Packet Captures for deep dives.
+- Cloud-agnostic, supporting multiple OS (like Linux, Windows, Azure Linux).
+
+##### Why Retina?
+Retina lets you **investigate network issues on-demand** and **continuously monitor your clusters**. Here are a couple scenarios where Retina shines, minimizing pain points and investigation time.
+
+##### Investigations: Debugging Network Connectivity
+Why can't my Pods connect to each other any more? **Typical investigation is time-intensive** and involves performing packet captures, where one must identify the Nodes involved, gain access to each Node, run tcpdump commands, and export the results off of each Node.
+
+With Retina, you can **automate this process** with a single CLI command or CRD/YAML that can:
+
+- Run captures on all Nodes hosting the Pods of interest.
+- Upload each Node's results to a storage blob.
+To begin using the CLI, see Quick Start Installation.
 
 Learn more about Retina (https://azure.microsoft.com/en-us/blog/microsoft-open-sources-retina-a-cloud-native-container-networking-observability-platform/)
 
-[Retina webpage](https://retina.sh/)
+and in the [Retina webpage](https://retina.sh/)
 
 ![alt text](content/retina.png)
 
