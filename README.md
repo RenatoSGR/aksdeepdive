@@ -7,17 +7,16 @@ Repo for the demo on Global Azure Portugal 2024
 2. [Pre-Requisites](#2-pre-requisites)
     - 2.1 [Create Azure Resources](#21-create-azure-resources)
 3. [Manual Setup Environment ](#3-manual-setup-environment)
-    - 3.1 [Create the AKS Cluster with Cilium Network Data Plane & CNI Overlay Network Plugin](#31-create-the-aks-cluster-with-cilium-network-data-plane--cni-overlay-network-plugin)
-    - 3.2 [Login into the cluster](#32-login-into-the-cluster)
-    - 3.3 [Enable cost analysis addon on the AKS cluster](#33-enable-cost-analysis-addon-on-the-aks-cluster)
-    - 3.4 [Update the AKS cluster from Azure CNI plugin to Azure CNI Overlay](#34-update-the-aks-cluster-from-azure-cni-plugin-to-azure-cni-overlay)
+    - 3.1 [Login into the cluster](#31-login-into-the-cluster)
+    - 3.2 [Enable cost analysis addon on the AKS cluster](#32-enable-cost-analysis-addon-on-the-aks-cluster)
+    - 3.3 [Update the AKS cluster from Azure CNI plugin to Azure CNI Overlay](#33-update-the-aks-cluster-from-azure-cni-plugin-to-azure-cni-overlay)
 4. [Installing unmanaged community nginx ingress controller](#4-installing-unmanaged-community-nginx-ingress-controller)
 5. [Deploy the Application - AKS Store Demo](#5-deploy-the-application---aks-store-demo)
 6. [Enable Istio addon](#6-enable-istio-addon)
     - 6.1 [Expose the store-front service via Istio ingress gateway - public gateway](#61-expose-the-store-front-service-via-istio-ingress-gateway---public-gateway)
 7. [Expose the store-admin service via app-routing addon](#7-expose-the-store-admin-service-via-app-routing-addon)
-    - 7.1 [Set up a custom domain name and SSL certificate with the app routing add-on](#71-set-up-a-custom-domain-name-and-ssl-certificate-with-the-app-routing-add-on-we-can-step-to-82-section)
-    - 7.2 [Create the Ingress that uses a host name and a certificate from Azure Key Vault](#72-create-the-ingress-that-uses-a-host-name-and-a-certificate-from-azure-key-vault)
+    - 7.1 [Set up a custom domain name and SSL certificate with the app routing add-on](#71-set-up-a-custom-domain-name-and-ssl-certificate-with-the-app-routing-add-on)
+    - 7.2 [Create the Ingress that uses a custom domain name hosted as an Azure DNS zone](#72-create-the-ingress-that-uses-a-custom-domain-name-hosted-as-an-azure-dns-zone)
     - 7.3 [Add to hosts file the subdomain](#73-add-to-hosts-file-the-subdomain)
 8. [Enable Monitoring into the cluster via managed Prometheus & Grafana](#8-enable-monitoring-into-the-cluster-via-managed-prometheus--grafana)
     - 8.1 [Enable Network Observability](#81-enable-network-observability)
@@ -49,103 +48,23 @@ We setup our development environment in the previous step. In this step, we'll *
 
 ## 3. Manual Setup Environment
 
-```bash
-alias k=kubectl
-
-source ~/.bashrc
-```
-
-```bash
-# create the demo variables
-export SUBSCRIPTION_ID=""
-export RESOURCE_GROUP=GlobalAzureDemo
-export CLUSTER=globalazure-demo
-export LOCATION=westeurope
-export DNS_ZONE=globalazuredemomsft.com
-export VAULT_NAME=globalazuredemokv
-```
-
-```bash
-# enable extensions and providers
-az extension add --name aks-preview
-az extension update --name aks-preview
-az provider register --namespace Microsoft.Network
-az provider register --namespace Microsoft.NetworkFunction
-az provider register --namespace Microsoft.ServiceNetworking
-az feature register --namespace "Microsoft.ContainerService" --name "NodeAutoProvisioningPreview"
-az extension add --name alb
-az extension add --name fleet
-az provider register --namespace Microsoft.ContainerService
-```
-
-```bash
-# create a public dns zone for the app routing addon that we will use later on
-az network dns zone create -g $RESOURCE_GROUP -n $DNS_ZONE
-
-```
-
-```bash
-# enable the oidc issuer and workload identity on the cluster
-az aks update -g $RESOURCE_GROUP -n $CLUSTER --enable-oidc-issuer --enable-workload-identity --no-wait
-```
-
-```bash	
-# enable the mesh addon on the cluster
-az aks mesh enable --resource-group $RESOURCE_GROUP --name $CLUSTER --no-wait
-```
-
-```bash
-# enable the app-routing addon on the cluster
-az aks approuting enable -g $RESOURCE_GROUP -n $CLUSTER 
-```
+Please check the [pre-requisites](pre-requisites.md) file for the setup of the environment.
 
 
-```bash
-# create a self signed certificate (already created via pre-requisites section)
-openssl req -new -x509 -nodes -out aks-ingress-tls.crt -keyout aks-ingress-tls.key -subj "/CN=store-front.globalazuredemomsft.com" -addext "subjectAltName=DNS:store-front.globalazuredemomsft.com"
-
-openssl pkcs12 -export -in aks-ingress-tls.crt -inkey aks-ingress-tls.key -out aks-ingress-tls.pfx
-
-# import the certificate into azure key vault
-az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f aks-ingress-tls.pfx 
-
-# retrieve the certificate from Azure Key Vault
-az keyvault certificate show --vault-name $VAULT_NAME -n aks-ingress-tls --query "id" --output tsv
-
-# enable azure key vault integration (this will enable secretcsi provider if not already enabled)
-az keyvault show --name $VAULT_NAME --query "id" --output tsv
-
-az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
-
-# attach dns zone to app routing
-az network dns zone show -g $RESOURCE_GROUP -n $DNS_ZONE --query "id" --output tsv
-
-az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
-
-```
-
-### 3.1. Create the AKS Cluster with Cilium Network Data Plane & CNI Overlay Network Plugin
-
-```bash	
-# create a cilium cluster for Node Auto Provisioning (NAP) that we will use later on
-az aks create --name aks-nap --resource-group fleet-aks --node-provisioning-mode Auto --network-plugin azure --network-plugin-mode overlay --network-dataplane cilium
-```
-
-
-### 3.2. Login into the cluster
+### 3.1. Login into the cluster
 ```bash
 #login into the AKS Cluster
 az account set --subscription $SUBSCRIPTION_ID
 az aks get-credentials --resource-group $RESOURCE_GROUP --name $CLUSTER --overwrite-existing
 ```
 
-### 3.3. Enable cost analysis addon on the AKS cluster
+### 3.2. Enable cost analysis addon on the AKS cluster
 ```bash
 # enable cost analysis on the cluster - only possible with Standard API mode
 az aks update --resource-group $RESOURCE_GROUP --name $CLUSTER --enable-cost-analysis
 ```
 
-### 3.4. Update the AKS cluster from Azure CNI plugin to Azure CNI Overlay
+### 3.3. Update the AKS cluster from Azure CNI plugin to Azure CNI Overlay
 
 Before doing this task, please read the [documentation](https://learn.microsoft.com/en-us/azure/aks/azure-cni-overlay?tabs=kubectl#upgrade-an-existing-cluster-to-cni-overlay) regarding the limitations and criteria for this operation.
 
@@ -186,16 +105,24 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
 ```bash	
 # create the namespace where the demo app will be deployed
 kubectl create ns aksappga
+```
 
+```bash
 # deploy the app into the namespace
 kubectl apply -f https://raw.githubusercontent.com/Azure-Samples/aks-store-demo/main/aks-store-all-in-one.yaml -n aksappga
+```
 
+```bash
 # expose the store-front service via unmanaged nginx ingress controller
 kubectl apply -f .\nginx-ingress.yaml
+```
 
+```bash
 # get the public IP of the ingress controller
 kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
 
+```bash	
 # curl the store-front service
 curl http://<ingress-ip>
 ```
@@ -205,14 +132,23 @@ curl http://<ingress-ip>
 ```bash
 # enable the addon on the cluster (already enabled via pre-requisites section)
 az aks mesh get-revisions --location $LOCATION -o table
-az aks mesh enable --resource-group $RESOURCE_GROUP --name $CLUSTER
+```
 
+```bash
+az aks mesh enable --resource-group $RESOURCE_GROUP --name $CLUSTER
+```
+
+```bash
 # check the profiles of the addon
 az aks show --resource-group $RESOURCE_GROUP --name $CLUSTER  --query 'serviceMeshProfile.mode'
+```
 
+```bash
 # label the demo namespace with the previously enabled Istio revision 
 kubectl label namespace aksappga istio.io/rev=asm-1-20
+```
 
+```bash	
 ### if needed restart the demo app for assume the Istio sidecar
 kubectl rollout restart deployment <deployment name> -n <deployment namespace>
 ```
@@ -222,16 +158,21 @@ kubectl rollout restart deployment <deployment name> -n <deployment namespace>
 ```bash
 # enable external ingress gateway for the mesh
 az aks mesh enable-ingress-gateway --resource-group $RESOURCE_GROUP --name $CLUSTER --ingress-gateway-type external
+```
 
+```bash
 # apply the gateway configuration
 kubectl apply -f .\gateway.yaml
+```
 
+```bash
 # get the gateway IP 
 kubectl get svc aks-istio-ingressgateway-external -n aks-istio-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
 
+```bash
 # curl the store-front service via the Istio gateway
 curl http://<gateway-ip>
-
 ```
 
 ## 7. Expose the store-admin service via app-routing addon 
@@ -254,10 +195,14 @@ az aks approuting enable -g $RESOURCE_GROUP -n $CLUSTER
 ```bash	
 # create the app-routing-ingress yaml definition
 kubectl apply -f .\app-routing-ingress.yaml
+```
 
+```bash	
 # get the public IP of the app-routing addon
 kubectl get svc nginx -n app-routing-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
 
+```bash	
 # curl the store-admin service via the app-routing addon
 curl http://<app-routing-ip>
 ```
@@ -279,9 +224,11 @@ For testing, you can use a self-signed public certificate instead of a Certifica
 ```bash
 # create a self signed certificate (already created via pre-requisites section)
 openssl req -new -x509 -nodes -out aks-ingress-tls.crt -keyout aks-ingress-tls.key -subj "/CN=store-front.globalazuredemomsft.com" -addext "subjectAltName=DNS:store-front.globalazuredemomsft.com"
-
+```	
+```bash
 openssl pkcs12 -export -in aks-ingress-tls.crt -inkey aks-ingress-tls.key -out aks-ingress-tls.pfx
-
+```
+```bash
 # import the certificate into azure key vault
 az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f aks-ingress-tls.pfx 
 ```
@@ -291,12 +238,19 @@ az keyvault certificate import --vault-name $VAULT_NAME -n aks-ingress-tls -f ak
 ```bash	
 # enable azure key vault integration (this will enable secretcsi provider if not already enabled)
 az keyvault show --name $VAULT_NAME --query "id" --output tsv
+```
 
+```bash	
+# update the app-routing addon on cluster to use the key vault
 az aks approuting update -g $RESOURCE_GROUP -n $CLUSTER --enable-kv --attach-kv /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.KeyVault/vaults/$VAULT_NAME
+```
 
+```bash	
 ### attach dns zone to app routing
 az network dns zone show -g $RESOURCE_GROUP -n $DNS_ZONE --query "id" --output tsv
+```
 
+```bash	
 az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Network/dnszones/$DNS_ZONE --attach-zones
 ```	
 
@@ -370,23 +324,27 @@ In this section we will enable the monitoring addon on the AKS cluster, enabling
 ```bash
 # create azure monitor resource (already created via pre-requisites section)
 az resource create --resource-group $RESOURCE_GROUP --namespace microsoft.monitor --resource-type accounts --name globalazuremonitor --location $LOCATION --properties '{}'
+```
 
+```bash	
 # create grafana instance (already created via pre-requisites section)
 az grafana create --name globalazuregf --resource-group $RESOURCE_GROUP 
+```
 
+```bash	
 # place grafana and monitor id into variables
 grafanaId=$(az grafana show --name globalazuregf --resource-group $RESOURCE_GROUP --query id --output tsv)
 azuremonitorId=$(az resource show --resource-group $RESOURCE_GROUP --name globalazuremonitor --resource-type "Microsoft.Monitor/accounts" --query id --output tsv)
+```
 
+```bash	
 # link monitor and grafana to AKS cluster
 az aks update --name $CLUSTER --resource-group $RESOURCE_GROUP --enable-azure-monitor-metrics --azure-monitor-workspace-resource-id $azuremonitorId --grafana-resource-id $grafanaId
+```
 
+```bash	
 ## see if the ama pods are running
 kubectl get po -owide -n kube-system | grep ama-
-
-or via powershell
-
-kubectl get po -owide -n kube-system | Select-String "ama-"
 ```	
 
 ### 8.1. Enable Network Observability 
@@ -413,6 +371,10 @@ Learn more about [control plane metrics](https://learn.microsoft.com/en-us/azure
 
 ## 9. Deploy the AI service connected to azure openai with keyvault to store the secrets (Open AI api key) - using the Microsoft Entra Workload ID - workload identity method
 
+A Microsoft Entra Workload ID is an identity that an application running on a pod uses to authenticate itself against other Azure services, such as workloads in software. The Secret Store CSI Driver integrates with native Kubernetes capabilities to federate with external identity providers.
+
+In this security model, the AKS cluster acts as token issuer. Microsoft Entra ID then uses OIDC to discover public signing keys and verify the authenticity of the service account token before exchanging it for a Microsoft Entra token. For your workload to exchange a service account token projected to its volume for a Microsoft Entra token, you need the Azure Identity client library in the Azure SDK or the Microsoft Authentication Library (MSAL)
+
 Learn more about [workload identity](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-identity-access#access-with-a-microsoft-entra-workload-id)
 
 Learn more about [csi secret store integration with AKS](https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-configuration-options#set-an-environment-variable-to-reference-kubernetes-secrets)
@@ -422,26 +384,37 @@ After enabling the workload identity and the csi driver on the pre-requisites se
 ```bash
 # verify that csi secret provider is enabled
 kubectl get pods -n kube-system -l 'app in (secrets-store-csi-driver,secrets-store-provider-azure)'
+```
 
+```bash	
 # create the identity for the workload identity (already created)
 export UAMI=wiglobalazurepmsi
+```
 
-
+```bash	
 # create te identity (already created)
 az identity create --name $UAMI --resource-group $RESOURCE_GROUP
+```
 
+```bash	
 export USER_ASSIGNED_CLIENT_ID="$(az identity show -g $RESOURCE_GROUP --name $UAMI --query 'clientId' -o tsv)"
 export IDENTITY_TENANT=$(az aks show --name $CLUSTER --resource-group $RESOURCE_GROUP --query identity.tenantId -o tsv)
 export KEYVAULT_SCOPE=$(az keyvault show --name $VAULT_NAME --query id -o tsv)
+```
 
+```bash	
 # create the role assignment for the identity to access the key vault (already created)
 az role assignment create --role "Key Vault Administrator" --assignee $USER_ASSIGNED_CLIENT_ID --scope $KEYVAULT_SCOPE
+```
 
+```bash	
 export AKS_OIDC_ISSUER="$(az aks show --resource-group $RESOURCE_GROUP --name $CLUSTER --query "oidcIssuerProfile.issuerUrl" -o tsv)"
 echo $AKS_OIDC_ISSUER
 export SERVICE_ACCOUNT_NAME="workload-identity-sa"  
 export SERVICE_ACCOUNT_NAMESPACE="aksappga" 
+```
 
+```bash	
 # create the service account with the workload identity annotation clientID
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -452,12 +425,23 @@ metadata:
   name: ${SERVICE_ACCOUNT_NAME}
   namespace: ${SERVICE_ACCOUNT_NAMESPACE}
 EOF
+```
 
+```bash	
 # create the federated identity for the workload identity
 export FEDERATED_IDENTITY_NAME="aksglobalazurefederatedidentity"
+```	
 
+```bash	
+# create the federated identity for the workload identity
 az identity federated-credential create --name $FEDERATED_IDENTITY_NAME --identity-name $UAMI --resource-group $RESOURCE_GROUP --issuer ${AKS_OIDC_ISSUER} --subject system:serviceaccount:${SERVICE_ACCOUNT_NAMESPACE}:${SERVICE_ACCOUNT_NAME}
+```
 
+```bash	
+# create the secret in the key vault
+az keyvault secret set --vault-name $VAULT_NAME --name openaiapikey --value ""
+```
+```bash	
 # create the secret provider class with the workload identity to access the key vault to retrieve the openai api key
 cat <<EOF | kubectl apply -f -
 apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -488,10 +472,29 @@ spec:
 EOF
 ```
 
+#### Verifiy the secret provider class and the secret created
+
+```bash
+# verify the secret provider class created
+kubectl get secretproviderclass -n aksappga
+```
+
+```bash	
+# describe the secret provider class 
+kubectl describe secretproviderclass globalazure-wi -n aksappga
+```
+
+```bash	
+# verify the secret created
+kubectl get secret openaisecret -n aksappga
+```
+
 ```bash
 # apply the ai-service deployment
 kubectl apply -f ai-service-v2.yaml
+```
 
+```bash	
 # check the env vars on pod, and confirm the openai api key is being retrieved from the key vault
 kubectl -n aksappga exec -it <pod-name> -c ai-service -- /bin/sh
 ```
@@ -515,11 +518,14 @@ In this section we will enable the [node auto provisioning feature](https://lear
 # create variables for the cilium cluster
 export RESOURCE_GROUP_NAP=fleet-aks
 export CLUSTER_NAP=aks-karp
+```
 
 ```bash
 #login into the AKS Cluster with cilium network data plane
 az aks get-credentials --resource-group $RESOURCE_GROUP_NAP --name $CLUSTER_NAP --overwrite-existing
+```
 
+```bash	
 # check the default node class to change the node sku and topology 
 kubectl edit aksnodeclass default
 ```
@@ -529,7 +535,9 @@ Lets deploy an [application](https://github.com/wdhif/docker-stress-ng) that wil
 ```bash
 # check the karpenter events to see the scaling events
 kubectl get events -A --field-selector source=karpenter -w
+```
 
+```bash	
 # create a stress deployment to trigger the scaling
 kubectl apply -f stress-deployment.yaml 
 ```
@@ -568,10 +576,14 @@ export MEMBER_CLUSTER_ID_3=/subscriptions/fef74fbe-24ca-4d9a-ba8e-30a17e95608b/r
 ```bash
 # create the fleet resource with a hub cluster (already created)
 az fleet create --resource-group $FLEET_GROUP --name $FLEET --location $LOCATION --enable-hub
+```
 
+```bash	
 ## Join the first member cluster
 az fleet member create --resource-group $GROUP --fleet-name $FLEET --name $MEMBER_NAME_3 --update-group test --member-cluster-id $MEMBER_CLUSTER_ID_3
+```
 
+```bash	
 ## list members
 az fleet member list --resource-group $GROUP --fleet-name $FLEET -o table
 ```
@@ -597,7 +609,9 @@ az fleet updaterun create --resource-group $GROUP --fleet-name $FLEET --name run
 ```bash
 #https://learn.microsoft.com/en-us/azure/kubernetes-fleet/update-orchestration?tabs=cli#update-clusters-in-a-specific-order
 az fleet updaterun create --resource-group $GROUP --fleet-name $FLEET --name run-3 --upgrade-type Full --kubernetes-version 1.26.0 --stages example-stages.json
+```
 
+```bash	
 Here's an example of input from the stages file (example-stages.json):
 
 {
