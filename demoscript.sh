@@ -1,17 +1,23 @@
+# create the demo variables
+$SUBSCRIPTION_ID="fef74fbe-24ca-4d9a-ba8e-30a17e95608b"
+$RESOURCE_GROUP="GlobalAzureFinal"
+$CLUSTER="globalazure-final"
+$LOCATION="westeurope"
+$DNS_ZONE="globalazurefinalmsft.com"
+$VAULT_NAME="globalazurefinalkv"
+
+
 #########################
 ######   ISTIO   ########
 #########################
 
-#App-Routing
+
+#########################
+###### App-Routing ######
+#########################
 
 # create the app-routing-ingress yaml definition
 kubectl apply -f .\app-routing-ingress.yaml
-
-# get the public IP of the app-routing addon
-kubectl get svc nginx -n app-routing-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-
-# curl the store-admin service via the app-routing addon
-curl http://<app-routing-ip>
 
 
 # retry the certificate uri from the key vault needed for the ingress definition
@@ -19,9 +25,6 @@ az keyvault certificate show --vault-name  $VAULT_NAME -n aks-ingress-tls --quer
 
 #copy the uri to the app-routing-ingress-tls.yaml file and apply it
 kubectl apply -f .\app-routing-ingress-tls.yaml  
-
-# retrieve the certificate uri from the key vault needed for the ingress definition
-az keyvault certificate show --vault-name  $VAULT_NAME -n aks-ingress-tls --query "id" --output tsv
 
 #########################
 ###### Observabiliy  ####
