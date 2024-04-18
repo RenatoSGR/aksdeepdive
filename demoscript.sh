@@ -1,16 +1,32 @@
 # create the demo variables
 $SUBSCRIPTION_ID="fef74fbe-24ca-4d9a-ba8e-30a17e95608b"
-$RESOURCE_GROUP="GlobalAzureFinal"
-$CLUSTER="globalazure-final"
+$RESOURCE_GROUP="GlobalAzureDemo"
+$CLUSTER="globalazure-demo"
 $LOCATION="westeurope"
-$DNS_ZONE="globalazurefinalmsft.com"
-$VAULT_NAME="globalazurefinalkv"
+$DNS_ZONE="globalazuredemomsft.com"
+$VAULT_NAME="globalazuredemokv"
 
 
 #########################
 ######   ISTIO   ########
 #########################
+# get revisions
+az aks mesh get-revisions --location $LOCATION -o table
 
+# check the profiles of the addon
+az aks show --resource-group $RESOURCE_GROUP --name $CLUSTER  --query 'serviceMeshProfile.mode'
+
+# label the demo namespace with the previously enabled Istio revision 
+kubectl label namespace aksappga istio.io/rev=asm-1-20
+
+### if needed restart the demo app for assume the Istio sidecar
+kubectl rollout restart deployment <deployment name> -n aksappga
+
+# apply the gateway configuration
+kubectl apply -f .\gateway.yaml
+
+# get the gateway IP 
+kubectl get svc aks-istio-ingressgateway-external -n aks-istio-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
 #########################
 ###### App-Routing ######
@@ -30,8 +46,14 @@ kubectl apply -f .\app-routing-ingress-tls.yaml
 ###### Observabiliy  ####
 #########################
 
+az grafana show --name grafana-globalazure --resource-group $RESOURCE_GROUP --query id --output tsv
 
+az resource show --resource-group $RESOURCE_GROUP --name globalazureworkspace --resource-type "Microsoft.Monitor/accounts" --query id --output tsv
+## see if the ama pods are running
+kubectl get po -owide -n kube-system | grep ama-
 
+# grafana dashboard
+ https://grafana-globalazure-e2gsb0dzbza3f0gk.weu.grafana.azure.com 
 
 
 #########################
@@ -131,5 +153,18 @@ env
 #########################
 ###### Karpenter ########
 #########################
+# create variables for the cilium cluster
+export RESOURCE_GROUP_NAP=fleet-aks
+export CLUSTER_NAP=aks-karp
 
+#login into the AKS Cluster with cilium network data plane
+az aks get-credentials --resource-group $RESOURCE_GROUP_NAP --name $CLUSTER_NAP --overwrite-existing
 
+# check the default node class to change the node sku and topology 
+kubectl edit aksnodeclass default
+
+# check the karpenter events to see the scaling events
+kubectl get events -A --field-selector source=karpenter -w
+
+# create a stress deployment to trigger the scaling
+kubectl apply -f stress-deployment.yaml 
