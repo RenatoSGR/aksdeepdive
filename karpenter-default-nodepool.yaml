@@ -6,6 +6,7 @@ spec:
   disruption:
     consolidationPolicy: WhenUnderutilized
     expireAfter: Never
+    consolidateAfter: 30s
   template:
     spec:
       nodeClassRef:
