@@ -64,22 +64,23 @@ kubectl get po -owide -n kube-system | grep ama-
 kubectl get pods -n kube-system -l 'app in (secrets-store-csi-driver,secrets-store-provider-azure)'
 
 # create the identity for the workload identity (already created)
-export UAMI=wiglobalazurepmsi2
+$UAMI="wiglobalazurepmsi2"
 
 # create te identity (already created)
 az identity create --name $UAMI --resource-group $RESOURCE_GROUP
 
-export USER_ASSIGNED_CLIENT_ID="$(az identity show -g $RESOURCE_GROUP --name $UAMI --query 'clientId' -o tsv)"
-export IDENTITY_TENANT=$(az aks show --name $CLUSTER --resource-group $RESOURCE_GROUP --query identity.tenantId -o tsv)
-export KEYVAULT_SCOPE=$(az keyvault show --name $VAULT_NAME --query id -o tsv)
+$USER_ASSIGNED_CLIENT_ID="$(az identity show -g $RESOURCE_GROUP --name $UAMI --query 'clientId' -o tsv)"
+$IDENTITY_TENANT=$(az aks show --name $CLUSTER --resource-group $RESOURCE_GROUP --query identity.tenantId -o tsv)
+$KEYVAULT_SCOPE=$(az keyvault show --name $VAULT_NAME --query id -o tsv)
 
 # create the role assignment for the identity to access the key vault (already created)
 az role assignment create --role "Key Vault Administrator" --assignee $USER_ASSIGNED_CLIENT_ID --scope $KEYVAULT_SCOPE
 
-export AKS_OIDC_ISSUER="$(az aks show --resource-group $RESOURCE_GROUP --name $CLUSTER --query "oidcIssuerProfile.issuerUrl" -o tsv)"
-echo $AKS_OIDC_ISSUER
-export SERVICE_ACCOUNT_NAME="workload-identity-sa"  
-export SERVICE_ACCOUNT_NAMESPACE="aksappga" 
+$AKS_OIDC_ISSUER="$(az aks show --resource-group $RESOURCE_GROUP --name $CLUSTER --query "oidcIssuerProfile.issuerUrl" -o tsv)"
+$AKS_OIDC_ISSUER
+
+$SERVICE_ACCOUNT_NAME="workload-identity-sa"  
+$SERVICE_ACCOUNT_NAMESPACE="aksappga" 
 
 # create the service account with the workload identity annotation clientID
 cat <<EOF | kubectl apply -f -
@@ -93,7 +94,7 @@ metadata:
 EOF
 
 # create the federated identity for the workload identity
-export FEDERATED_IDENTITY_NAME="aksglobalazurefederatedidentity2"
+$FEDERATED_IDENTITY_NAME="aksglobalazurefederatedidentity2"
 
 # create the federated identity for the workload identity
 az identity federated-credential create --name $FEDERATED_IDENTITY_NAME --identity-name $UAMI --resource-group $RESOURCE_GROUP --issuer ${AKS_OIDC_ISSUER} --subject system:serviceaccount:${SERVICE_ACCOUNT_NAMESPACE}:${SERVICE_ACCOUNT_NAME}
@@ -154,8 +155,8 @@ env
 ###### Karpenter ########
 #########################
 # create variables for the cilium cluster
-export RESOURCE_GROUP_NAP=fleet-aks
-export CLUSTER_NAP=aks-karp
+$RESOURCE_GROUP_NAP="fleet-aks"
+$CLUSTER_NAP="aks-karp"
 
 #login into the AKS Cluster with cilium network data plane
 az aks get-credentials --resource-group $RESOURCE_GROUP_NAP --name $CLUSTER_NAP --overwrite-existing
