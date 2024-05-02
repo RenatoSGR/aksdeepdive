@@ -11,7 +11,7 @@ Repo with all the content needed for a journey to setup a managed production rea
 1. [Demo Objectives](#1-learning-objectives)
 2. [Pre-Requisites](#2-pre-requisites)
     - 2.1 [Create Azure Resources](#21-create-azure-resources)
-3. [Manual Setup Environment ](#3-manual-setup-environment)
+3. [Environment Setup](#3-environment-setup)
     - 3.1 [Login into the cluster](#31-login-into-the-cluster)
     - 3.2 [Enable cost analysis addon on the AKS cluster](#32-enable-cost-analysis-addon-on-the-aks-cluster)
     - 3.3 [Update the AKS cluster from Azure CNI plugin to Azure CNI Overlay](#33-update-the-aks-cluster-from-azure-cni-plugin-to-azure-cni-overlay)
@@ -67,9 +67,11 @@ We setup our development environment in the previous step. In this step, we'll *
 - Azure Kubernetes Fleet Manager - Manage multiple AKS clusters
 - AKS (Azure Kubernetes Services) - Cilium Network Data Plane & CNI Overlay Network Plugin
 
-## 3. Manual Setup Environment
+## 3. Environment Setup
 
-Please check the [pre-requisites](pre-requisites.md) file for the setup of the environment.
+Please check the **[pre-requisites](pre-requisites.md)** file for the setup of the environment.
+
+After running all the pre-requisites, please follow the below steps
 
 
 ### 3.1. Login into the cluster
@@ -115,6 +117,16 @@ helm install ingress-nginx ingress-nginx/ingress-nginx \
 ```
 
 ## 5. Deploy the Application - AKS Store Demo 
+
+The application used in the next steps is the AKS Store Demo application, that can be found on the below repo. 
+
+This sample demo app consists of a group of containerized microservices that can be easily deployed into an Azure Kubernetes Service (AKS) cluster. This is meant to show a realistic scenario using a polyglot architecture, event-driven design, and common open source back-end services (eg - RabbitMQ, MongoDB). The application also leverages OpenAI's GPT-3 models to generate product descriptions. This can be done using either [Azure OpenAI](https://learn.microsoft.com/azure/ai-services/openai/overview) or [OpenAI](https://openai.com/).
+
+This application is inspired by another demo app called [Red Dog](https://github.com/Azure/reddog-code).
+
+> &#8505; **Note**
+> This is not meant to be an example of perfect code to be used in production, but more about showing a realistic application running in AKS. 
+
 
 **Github Repo:** [AKS Store Demo](https://github.com/Azure-Samples/aks-store-demo)
 
@@ -698,4 +710,18 @@ Here's an example of input from the stages file (example-stages.json):
 - --upgrade-type NodeImageOnly
 
 
+## Run this demo with GitHub Codespaces
 
+This repo also includes [DevContainer configuration](./.devcontainer/devcontainer.json), so you can open the repo using [GitHub Codespaces](https://docs.github.com/en/codespaces/overview). This will allow you to run the app in a container in the cloud, without having to install Docker on your local machine. When the Codespace is created, you can run the app using the same instructions as above.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=786923228)
+
+## Additional Resources
+
+- AKS Documentation. https://learn.microsoft.com/azure/aks
+- Kubernetes Learning Path. https://azure.microsoft.com/resources/kubernetes-learning-path 
+
+## Contributions
+
+### Contributing to this repository
+This repository will accept improvement and bug fix contributions
