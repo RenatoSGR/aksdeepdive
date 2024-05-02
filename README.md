@@ -712,7 +712,7 @@ Here's an example of input from the stages file (example-stages.json):
 
 ## Run this demo with GitHub Codespaces
 
-This repo also includes [DevContainer configuration](./.devcontainer/devcontainer.json), so you can open the repo using [GitHub Codespaces](https://docs.github.com/en/codespaces/overview). This will allow you to run the app in a container in the cloud, without having to install Docker on your local machine. When the Codespace is created, you can run the app using the same instructions as above.
+This repo also includes [DevContainer configuration](./.devcontainer/devcontainer.json), so you can open the repo using [GitHub Codespaces](https://docs.github.com/en/codespaces/overview). This will allow you to run all this demo steps, without having to install or having any extension being used on your local machine. When the Codespace is created, you can run the steps using the same instructions as above.
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=786923228)
 
