@@ -1,5 +1,5 @@
-# AKSDeepDive-GA
-Repo for the demo on Global Azure Portugal 2024
+# Deep Dive into Azure Kubernetes Services (AKS) - A journey to a Production Ready Cluster 
+Repo for a journey to a Production Ready Cluster 
 
 **Table Of Contents**
 
@@ -28,7 +28,7 @@ Repo for the demo on Global Azure Portugal 2024
 
 
 ## 1. Learning Objectives
-Deep Dive in AKS, has as primary goal to equip you with the knowledge and skills necessary to deploy and configure a production-ready Azure Kubernetes Service (AKS) cluster. By the end of this demo, you should be able to:
+This Deep Dive in AKS journey, has as primary goal to equip you with the knowledge and skills necessary to deploy and configure a production-ready Azure Kubernetes Service (AKS) cluster. By the end of this demo, you should be able to:
 
 **1. Understand the Core Concepts of AKS:** Gain a deep understanding of AKS, its architecture, and its role in deploying and managing containerized applications.
 
