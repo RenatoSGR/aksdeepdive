@@ -28,7 +28,23 @@ Repo for the demo on Global Azure Portugal 2024
 
 
 ## 1. Learning Objectives
-Deep Dive in AKS, to learn to deploy and configure a production ready AKS Cluster and prepare workloads to run on it with all the configurations needed for a proper lifecycle on AKS CLusters. 
+Deep Dive in AKS, has as primary goal to equip you with the knowledge and skills necessary to deploy and configure a production-ready Azure Kubernetes Service (AKS) cluster. By the end of this demo, you should be able to:
+
+**1. Understand the Core Concepts of AKS:** Gain a deep understanding of AKS, its architecture, and its role in deploying and managing containerized applications.
+
+**2. Deploy a Production-Ready AKS Cluster:** Learn how to set up an AKS cluster that's ready for production, complete with all the necessary configurations for a proper lifecycle on AKS clusters.
+
+**3. Implement Managed Add-ons:** Learn how to enhance your AKS cluster with fully managed add-ons by Microsoft. This includes Istio Service Mesh for seamless service-to-service communication, observability and monitoring tools for insights into your applications, and ingress controllers for managing external access to your services.
+
+**4. Expose Your Services:** Learn how to expose your services to the outside world using Istio Add-on ingress gateway, app-routing add-on, azure DNS, and Azure Key Vault to store tls certificates.
+
+**5. Secure Your workloads:** Learn how to use Azure Key Vault to securely store and manage sensitive information like secrets and certificates.
+
+**6. Enable Autoscaling:** Understand how to implement autoscaling in your AKS cluster to ensure your clusters can scale out to handle increased load and scale in when demand decreases.
+
+**7. Manage Multiple Clusters:** Get hands-on experience with Azure Kubernetes Fleet Manager to manage multiple AKS clusters at scale.
+
+By mastering these objectives, you'll be well-equipped to deploy, manage, and scale containerized applications in a production environment using AKS with a decreased effort and complexity into Ops.
 
 ## 2. Pre-Requisites
 - **Azure Subscription** - [Signup for a free account.](https://azure.microsoft.com/free/)
