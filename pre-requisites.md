@@ -1,10 +1,6 @@
 ## Pre-requisites for the Global Azure Demo AKS environment
 
-```bash
-alias k=kubectl
 
-source ~/.bashrc
-```
 
 ```bash
 # create the demo variables
@@ -15,6 +11,19 @@ export LOCATION=westeurope
 export DNS_ZONE=globalazuredemomsft.com
 export VAULT_NAME=globalazuredemokv
 ```
+
+```bash
+# create and AKS with Azure CNI Overlay Network Plugin
+
+az aks create -n $CLUSTER -g $RESOURCE_GROUP --location $LOCATION --network-plugin azure --network-plugin-mode overlay --pod-cidr 192.168.0.0/16
+```
+
+or 
+```bash
+# create and AKS with Azure CNI (in the demo we have a step to convert it to Azure CNI Overlay Network Plugin)
+az aks create -n $CLUSTER -g $RESOURCE_GROUP --location $LOCATION --network-plugin azure --generate-ssh-keys
+```
+
 
 ```bash
 # enable extensions and providers
@@ -81,3 +90,4 @@ az aks approuting zone add -g $RESOURCE_GROUP -n $CLUSTER --ids=/subscriptions/$
 # create a cilium cluster for Node Auto Provisioning (NAP) that we will use later on
 az aks create --name aks-nap --resource-group fleet-aks --node-provisioning-mode Auto --network-plugin azure --network-plugin-mode overlay --network-dataplane cilium
 ```
+

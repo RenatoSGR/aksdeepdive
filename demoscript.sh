@@ -6,6 +6,10 @@ $LOCATION="westeurope"
 $DNS_ZONE="globalazuredemomsft.com"
 $VAULT_NAME="globalazuredemokv"
 
+# alias for kubectl
+alias k=kubectl
+source ~/.bashrc
+
 
 #########################
 ######   ISTIO   ########
